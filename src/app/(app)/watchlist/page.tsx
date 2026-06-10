@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, Trash2, Loader2 } from "lucide-react";
+import { Bell, Trash2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { getWatchlist, removeFromWatchlist } from "@/lib/firebase/db";
@@ -16,22 +16,32 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WatchlistItem } from "@/types";
 
-function Item({ item, onRemove }: { item: WatchlistItem; onRemove: (id: number) => void }) {
+function Item({ item, onRemove }: { item: WatchlistItem; onRemove: (item: WatchlistItem) => void }) {
   const img = posterUrl(item.posterPath, "w185");
+  const isTv = item.mediaType === "tv";
+  const href = `/${isTv ? "tv" : "movie"}/${item.movieId}`;
   const released = item.released || isReleased(item.releaseDate);
   return (
     <div className="flex gap-4 rounded-lg border border-border bg-card p-3">
-      <Link href={`/movie/${item.movieId}`} className="relative h-28 w-20 shrink-0 overflow-hidden rounded bg-secondary">
+      <Link href={href} className="relative h-28 w-20 shrink-0 overflow-hidden rounded bg-secondary">
         {img && <Image src={img} alt={item.title} fill className="object-cover" />}
       </Link>
       <div className="flex flex-1 flex-col justify-between">
         <div>
-          <Link href={`/movie/${item.movieId}`} className="font-semibold hover:underline">
+          <Link href={href} className="font-semibold hover:underline">
             {item.title}
           </Link>
           <p className="text-sm text-muted-foreground">{formatDate(item.releaseDate)}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {released ? <Badge variant="success">Released</Badge> : <Badge>Upcoming</Badge>}
+            {isTv ? (
+              <Badge variant="secondary" className="gap-1">
+                <Tv className="h-3 w-3" /> Series
+              </Badge>
+            ) : released ? (
+              <Badge variant="success">Released</Badge>
+            ) : (
+              <Badge>Upcoming</Badge>
+            )}
             {item.notify && (
               <Badge variant="secondary" className="gap-1">
                 <Bell className="h-3 w-3" /> Alerts on
@@ -40,7 +50,7 @@ function Item({ item, onRemove }: { item: WatchlistItem; onRemove: (id: number) 
           </div>
         </div>
         <div>
-          <Button variant="ghost" size="sm" onClick={() => onRemove(item.movieId)}>
+          <Button variant="ghost" size="sm" onClick={() => onRemove(item)}>
             <Trash2 className="h-4 w-4" /> Remove
           </Button>
         </div>
@@ -60,13 +70,16 @@ export default function WatchlistPage() {
       .catch(() => setItems([]));
   }, [user]);
 
-  async function remove(movieId: number) {
+  async function remove(item: WatchlistItem) {
     if (!user) return;
+    const mediaType = item.mediaType ?? "movie";
     const prev = items ?? [];
-    setItems(prev.filter((i) => i.movieId !== movieId));
+    setItems(prev.filter((i) => !(i.movieId === item.movieId && (i.mediaType ?? "movie") === mediaType)));
     try {
-      await removeFromWatchlist(user.uid, movieId);
-      await apiFetch(`/api/waitlist?movieId=${movieId}`, { method: "DELETE" }).catch(() => {});
+      await removeFromWatchlist(user.uid, item.movieId, mediaType);
+      await apiFetch(`/api/waitlist?movieId=${item.movieId}&mediaType=${mediaType}`, {
+        method: "DELETE",
+      }).catch(() => {});
       toast("Removed from watchlist");
     } catch {
       setItems(prev);
@@ -94,7 +107,7 @@ export default function WatchlistPage() {
     ) : (
       <div className="grid gap-3 sm:grid-cols-2">
         {list.map((i) => (
-          <Item key={i.movieId} item={i} onRemove={remove} />
+          <Item key={`${i.mediaType ?? "movie"}-${i.movieId}`} item={i} onRemove={remove} />
         ))}
       </div>
     );

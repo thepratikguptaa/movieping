@@ -46,7 +46,7 @@ export function MovieRow({
             className="no-scrollbar flex gap-3 overflow-x-auto scroll-smooth px-1 pb-2 md:gap-4"
           >
             {movies.map((m) => (
-              <div key={m.id} className="w-32 shrink-0 md:w-40 lg:w-44">
+              <div key={`${m.mediaType ?? "movie"}-${m.id}`} className="w-32 shrink-0 md:w-40 lg:w-44">
                 <MovieCard movie={m} />
               </div>
             ))}

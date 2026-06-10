@@ -129,7 +129,7 @@ export default function SearchPage() {
       ) : (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           {cards.map((m) => (
-            <MovieCard key={m.id} movie={m} />
+            <MovieCard key={`${m.mediaType ?? "movie"}-${m.id}`} movie={m} />
           ))}
         </div>
       )}
