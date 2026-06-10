@@ -1,9 +1,13 @@
 import type {
+  MediaType,
   TMDBGenre,
   TMDBMovie,
   TMDBMovieDetails,
   TMDBPaginatedResponse,
+  TMDBTvDetails,
+  TMDBTvShow,
 } from "@/types";
+import { isReleased } from "@/lib/utils";
 
 const BASE_URL = "https://api.themoviedb.org/3";
 
@@ -93,6 +97,86 @@ export function getMovieDetails(id: number) {
   return tmdb<TMDBMovieDetails>(`/movie/${id}`, { append_to_response: "credits" });
 }
 
+// ----------------------------------------------------------------- TV / series
+
+export function getTvDetails(id: number) {
+  return tmdb<TMDBTvDetails>(`/tv/${id}`, { append_to_response: "credits" });
+}
+
+export async function getTvGenres(): Promise<TMDBGenre[]> {
+  const data = await tmdb<{ genres: TMDBGenre[] }>("/genre/tv/list", {}, 60 * 60 * 24);
+  return data.genres;
+}
+
+export function getTrendingTv(timeWindow: "day" | "week" = "week", page = 1) {
+  return tmdb<TMDBPaginatedResponse<TMDBTvShow>>(`/trending/tv/${timeWindow}`, { page });
+}
+
+export function getPopularTv(page = 1) {
+  return tmdb<TMDBPaginatedResponse<TMDBTvShow>>("/tv/popular", { page });
+}
+
+/** Multi-search across movies + TV (+ people, which we drop on normalize). */
+export function searchMulti(query: string, page = 1) {
+  return tmdb<TMDBPaginatedResponse<TMDBMultiResult>>(
+    "/search/multi",
+    { query, page, include_adult: "false" },
+    60
+  );
+}
+
+interface TMDBMultiResult {
+  id: number;
+  media_type: "movie" | "tv" | "person";
+  title?: string; // movie
+  name?: string; // tv / person
+  poster_path?: string | null;
+  release_date?: string; // movie
+  first_air_date?: string; // tv
+  vote_average?: number;
+}
+
+/** Common card shape so movies and series render through the same components. */
+export interface MediaCard {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date?: string;
+  vote_average?: number;
+  mediaType: MediaType;
+}
+
+/** Normalize multi-search / TV-list results to {@link MediaCard}, dropping people. */
+export function normalizeMulti(
+  results: (TMDBMultiResult | TMDBTvShow | TMDBMovie)[],
+  forceType?: MediaType
+): MediaCard[] {
+  const out: MediaCard[] = [];
+  for (const r of results) {
+    const mediaType = (forceType ?? ("media_type" in r ? r.media_type : "movie")) as
+      | MediaType
+      | "person";
+    if (mediaType === "person") continue;
+    const rec = r as TMDBMultiResult;
+    out.push({
+      id: rec.id,
+      title: rec.title ?? rec.name ?? "Untitled",
+      poster_path: rec.poster_path ?? null,
+      release_date: rec.release_date ?? rec.first_air_date,
+      vote_average: rec.vote_average,
+      mediaType,
+    });
+  }
+  return out;
+}
+
+/** Count of a series' seasons that have already aired (season_number >= 1). */
+export function airedSeasonCount(details: TMDBTvDetails): number {
+  return (details.seasons ?? []).filter(
+    (s) => s.season_number >= 1 && s.air_date && isReleased(s.air_date)
+  ).length;
+}
+
 /** Default region for streaming availability (override with WATCH_REGION). */
 export const WATCH_REGION = process.env.WATCH_REGION || "US";
 
@@ -135,9 +219,12 @@ function streamProviders(r: TMDBProvidersResult) {
  * Streaming availability across ALL regions where the movie can be streamed.
  * Returns one entry per country that has at least one streaming provider.
  */
-export async function getAllOttRegions(id: number): Promise<RegionOtt[]> {
+export async function getAllOttRegions(
+  id: number,
+  media: MediaType = "movie"
+): Promise<RegionOtt[]> {
   const data = await tmdb<{ results: Record<string, TMDBProvidersResult> }>(
-    `/movie/${id}/watch/providers`,
+    `/${media}/${id}/watch/providers`,
     {},
     60 * 60 * 6
   );
@@ -155,10 +242,11 @@ export async function getAllOttRegions(id: number): Promise<RegionOtt[]> {
  */
 export async function getWatchProviders(
   id: number,
-  region: string = WATCH_REGION
+  region: string = WATCH_REGION,
+  media: MediaType = "movie"
 ): Promise<OttAvailability> {
   const data = await tmdb<{ results: Record<string, TMDBProvidersResult> }>(
-    `/movie/${id}/watch/providers`,
+    `/${media}/${id}/watch/providers`,
     {},
     60 * 60 * 6
   );
@@ -196,6 +284,25 @@ export function discoverMovies(opts: {
     sort_by: opts.sortBy || "popularity.desc",
     page: opts.page ?? 1,
     "vote_count.gte": opts.minVotes ?? 30,
+    include_adult: "false",
+  });
+}
+
+/** Discover TV series. NOTE: TMDB TV genre ids differ from movie genre ids, so
+ *  recommendations discover TV by language/popularity rather than movie genres. */
+export function discoverTv(opts: {
+  genres?: number[]; // TMDB *TV* genre ids (distinct from movie genre ids)
+  language?: string; // single ISO 639-1 code, optional
+  page?: number;
+  sortBy?: string;
+  minVotes?: number;
+}) {
+  return tmdb<TMDBPaginatedResponse<TMDBTvShow>>("/discover/tv", {
+    with_genres: opts.genres?.length ? opts.genres.join("|") : undefined,
+    with_original_language: opts.language || undefined,
+    sort_by: opts.sortBy || "popularity.desc",
+    page: opts.page ?? 1,
+    "vote_count.gte": opts.minVotes ?? 50,
     include_adult: "false",
   });
 }

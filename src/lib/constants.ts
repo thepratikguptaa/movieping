@@ -22,6 +22,23 @@ export const FALLBACK_GENRES = [
   { id: 37, name: "Western" },
 ];
 
+// TMDB uses a separate genre list for TV (different ids than movies).
+export const FALLBACK_TV_GENRES = [
+  { id: 10759, name: "Action & Adventure" },
+  { id: 16, name: "Animation" },
+  { id: 35, name: "Comedy" },
+  { id: 80, name: "Crime" },
+  { id: 99, name: "Documentary" },
+  { id: 18, name: "Drama" },
+  { id: 10751, name: "Family" },
+  { id: 10762, name: "Kids" },
+  { id: 9648, name: "Mystery" },
+  { id: 10764, name: "Reality" },
+  { id: 10765, name: "Sci-Fi & Fantasy" },
+  { id: 10768, name: "War & Politics" },
+  { id: 37, name: "Western" },
+];
+
 export const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "hi", label: "Hindi" },

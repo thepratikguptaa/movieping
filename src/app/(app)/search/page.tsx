@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isReleased } from "@/lib/utils";
-import type { TMDBMovie } from "@/types";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<TMDBMovie[]>([]);
+  const [results, setResults] = useState<MovieCardData[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalResults, setTotalResults] = useState(0);
@@ -27,7 +26,7 @@ export default function SearchPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/movies/search?query=${encodeURIComponent(q)}&page=${nextPage}`
+        `/api/search?query=${encodeURIComponent(q)}&page=${nextPage}`
       );
       const data = await res.json();
       if (activeQuery.current !== q) return; // a newer search superseded this
@@ -62,22 +61,16 @@ export default function SearchPage() {
     ? results.filter((m) => !isReleased(m.release_date))
     : results;
 
-  const cards: MovieCardData[] = shown.map((m) => ({
-    id: m.id,
-    title: m.title,
-    poster_path: m.poster_path,
-    release_date: m.release_date,
-    vote_average: m.vote_average,
-  }));
+  const cards: MovieCardData[] = shown;
 
   const canLoadMore = page < totalPages;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold md:text-3xl">Search movies</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">Search</h1>
         <p className="text-muted-foreground">
-          Find any movie — including every upcoming release — and add it to your watchlist.
+          Find any movie or web series — including upcoming releases — and add it to your watchlist.
         </p>
       </div>
 

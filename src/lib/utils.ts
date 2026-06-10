@@ -1,8 +1,15 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { MediaType } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/** Firestore doc id for a tracked title. Movies keep their bare numeric id
+ *  (backward-compatible); series are namespaced to avoid id collisions. */
+export function mediaDocId(mediaType: MediaType, id: number): string {
+  return mediaType === "tv" ? `tv_${id}` : String(id);
 }
 
 export function formatDate(date?: string | null): string {

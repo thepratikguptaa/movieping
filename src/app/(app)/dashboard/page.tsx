@@ -8,7 +8,7 @@ import { MovieRow, MovieRowSkeleton } from "@/components/movie-row";
 import type { MovieCardData } from "@/components/movie-card";
 import type { TMDBMovie, WatchlistItem } from "@/types";
 
-async function fetchRow(url: string): Promise<TMDBMovie[]> {
+async function fetchRow<T = TMDBMovie>(url: string): Promise<T[]> {
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
@@ -19,12 +19,14 @@ export default function DashboardPage() {
   const { profile } = useAuth();
   const [trending, setTrending] = useState<TMDBMovie[] | null>(null);
   const [upcoming, setUpcoming] = useState<TMDBMovie[] | null>(null);
-  const [recs, setRecs] = useState<TMDBMovie[] | null>(null);
+  const [recs, setRecs] = useState<MovieCardData[] | null>(null);
+  const [trendingTv, setTrendingTv] = useState<MovieCardData[] | null>(null);
   const [watchlist, setWatchlist] = useState<WatchlistItem[] | null>(null);
 
   useEffect(() => {
     fetchRow("/api/movies/trending").then(setTrending);
     fetchRow("/api/movies/upcoming").then(setUpcoming);
+    fetchRow<MovieCardData>("/api/tv/trending").then(setTrendingTv);
   }, []);
 
   useEffect(() => {
@@ -34,7 +36,9 @@ export default function DashboardPage() {
       params.set("genres", profile.preferences.genres.join(","));
     if (profile.preferences.languages.length)
       params.set("languages", profile.preferences.languages.join(","));
-    fetchRow(`/api/movies/recommendations?${params.toString()}`).then(setRecs);
+    if (profile.preferences.tvGenres?.length)
+      params.set("tvGenres", profile.preferences.tvGenres.join(","));
+    fetchRow<MovieCardData>(`/api/movies/recommendations?${params.toString()}`).then(setRecs);
     getWatchlist(profile.uid).then(setWatchlist).catch(() => setWatchlist([]));
   }, [profile]);
 
@@ -43,6 +47,7 @@ export default function DashboardPage() {
     title: w.title,
     poster_path: w.posterPath,
     release_date: w.releaseDate ?? undefined,
+    mediaType: w.mediaType,
   }));
 
   return (
@@ -75,9 +80,15 @@ export default function DashboardPage() {
       )}
 
       {trending === null ? (
-        <MovieRowSkeleton title="Trending this week" />
+        <MovieRowSkeleton title="Trending movies" />
       ) : (
-        <MovieRow title="Trending this week" movies={trending} />
+        <MovieRow title="Trending movies" movies={trending} />
+      )}
+
+      {trendingTv === null ? (
+        <MovieRowSkeleton title="Trending series" />
+      ) : (
+        <MovieRow title="Trending series" movies={trendingTv} />
       )}
 
       {watchlist === null ? (

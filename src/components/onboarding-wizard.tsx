@@ -8,7 +8,7 @@ import { Check, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { savePreferences } from "@/lib/firebase/db";
-import { FALLBACK_GENRES, LANGUAGES, INDUSTRIES } from "@/lib/constants";
+import { FALLBACK_GENRES, FALLBACK_TV_GENRES, LANGUAGES, INDUSTRIES } from "@/lib/constants";
 import { posterUrl } from "@/lib/tmdb";
 import type { TMDBGenre, TMDBMovie, UserPreferences } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -58,11 +58,13 @@ export function OnboardingWizard() {
   const [saving, setSaving] = useState(false);
 
   const [genres, setGenres] = useState<Set<number>>(new Set());
+  const [tvGenres, setTvGenres] = useState<Set<number>>(new Set());
   const [languages, setLanguages] = useState<Set<string>>(new Set());
   const [industries, setIndustries] = useState<Set<string>>(new Set());
   const [favorites, setFavorites] = useState<TMDBMovie[]>([]);
 
   const [genreOptions, setGenreOptions] = useState<TMDBGenre[]>(FALLBACK_GENRES);
+  const [tvGenreOptions, setTvGenreOptions] = useState<TMDBGenre[]>(FALLBACK_TV_GENRES);
 
   // movie search
   const [q, setQ] = useState("");
@@ -76,6 +78,10 @@ export function OnboardingWizard() {
     fetch("/api/movies/genres")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d?.genres && setGenreOptions(d.genres))
+      .catch(() => {});
+    fetch("/api/tv/genres")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.genres && setTvGenreOptions(d.genres))
       .catch(() => {});
   }, []);
 
@@ -115,7 +121,7 @@ export function OnboardingWizard() {
   const steps = useMemo(
     () => [
       {
-        title: "What genres do you love?",
+        title: "What movie genres do you love?",
         subtitle: "Pick a few — we'll tailor recommendations.",
         valid: genres.size > 0,
         content: (
@@ -123,6 +129,18 @@ export function OnboardingWizard() {
             options={genreOptions.map((g) => ({ id: g.id, label: g.name }))}
             selected={genres as Set<string | number>}
             onToggle={(id) => toggle(setGenres)(Number(id))}
+          />
+        ),
+      },
+      {
+        title: "What about series?",
+        subtitle: "Pick the kinds of web series you watch.",
+        valid: tvGenres.size > 0,
+        content: (
+          <ChipGrid
+            options={tvGenreOptions.map((g) => ({ id: g.id, label: g.name }))}
+            selected={tvGenres as Set<string | number>}
+            onToggle={(id) => toggle(setTvGenres)(Number(id))}
           />
         ),
       },
@@ -216,7 +234,7 @@ export function OnboardingWizard() {
         ),
       },
     ],
-    [genres, languages, industries, favorites, genreOptions, q, results, searching]
+    [genres, tvGenres, languages, industries, favorites, genreOptions, tvGenreOptions, q, results, searching]
   );
 
   const current = steps[step];
@@ -227,6 +245,7 @@ export function OnboardingWizard() {
     setSaving(true);
     const prefs: UserPreferences = {
       genres: [...genres],
+      tvGenres: [...tvGenres],
       languages: [...languages],
       industries: [...industries],
       favoriteMovies: favorites.map((m) => m.id),

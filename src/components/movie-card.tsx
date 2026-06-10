@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star, ImageOff } from "lucide-react";
+import { Star, ImageOff, Tv } from "lucide-react";
 import { posterUrl } from "@/lib/tmdb";
 import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import type { MediaType } from "@/types";
 
 export interface MovieCardData {
   id: number;
@@ -14,18 +15,26 @@ export interface MovieCardData {
   poster_path: string | null;
   release_date?: string;
   vote_average?: number;
+  mediaType?: MediaType;
 }
 
 export function MovieCard({ movie }: { movie: MovieCardData }) {
   const img = posterUrl(movie.poster_path, "w342");
+  const isTv = movie.mediaType === "tv";
+  const href = `/${isTv ? "tv" : "movie"}/${movie.id}`;
   return (
     <motion.div
       whileHover={{ scale: 1.05, zIndex: 10 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
       className="group relative"
     >
-      <Link href={`/movie/${movie.id}`} className="block">
+      <Link href={href} className="block">
         <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-secondary shadow-md ring-1 ring-white/5 transition-shadow group-hover:shadow-2xl group-hover:shadow-black/50 group-hover:ring-primary/40">
+          {isTv && (
+            <Badge className="absolute left-2 top-2 gap-1 bg-black/70 text-white">
+              <Tv className="h-3 w-3" /> Series
+            </Badge>
+          )}
           {img ? (
             <Image
               src={img}

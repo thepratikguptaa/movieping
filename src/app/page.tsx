@@ -4,15 +4,15 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bell, Heart, Sparkles, MonitorPlay } from "lucide-react";
+import { Bell, Sparkles, MonitorPlay, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 
 const FEATURES = [
   { icon: Bell, title: "Theatrical release alerts", desc: "Get a push the moment a waitlisted movie hits theaters." },
-  { icon: MonitorPlay, title: "OTT streaming alerts", desc: "We ping you again when it lands on Netflix, Prime & other streaming services." },
-  { icon: Sparkles, title: "Personalized", desc: "Recommendations tuned to your genres & languages." },
-  { icon: Heart, title: "Your watchlist", desc: "Track everything you're waiting to watch in one place." },
+  { icon: MonitorPlay, title: "OTT streaming alerts", desc: "Pinged again when a movie or web series lands on Netflix, Prime & more." },
+  { icon: Layers, title: "New-season alerts", desc: "Track a series and we'll tell you the instant a new season starts streaming." },
+  { icon: Sparkles, title: "Personalized", desc: "Movie & series picks tuned to your genres & languages." },
 ];
 
 export default function Landing() {
@@ -45,7 +45,7 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl text-4xl font-extrabold tracking-tight md:text-6xl"
         >
-          Never miss a movie — in <span className="text-primary">theaters</span> or on <span className="text-primary">streaming</span>.
+          Never miss a movie or <span className="text-primary">web series</span> — in theaters or on <span className="text-primary">streaming</span>.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -53,9 +53,9 @@ export default function Landing() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-6 max-w-xl text-lg text-muted-foreground"
         >
-          Waitlist the movies you&apos;re excited about. MoviePing pings you the
-          instant they hit theaters — then again when they arrive on OTT.
-          Two alerts, zero FOMO, personalized to your taste.
+          Waitlist the movies and series you&apos;re excited about. MoviePing pings
+          you when a movie hits theaters, when anything lands on OTT, and when your
+          series gets a new season — zero FOMO, personalized to your taste.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

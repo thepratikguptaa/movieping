@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useFcm } from "@/hooks/use-fcm";
 import { updateProfile } from "@/lib/firebase/db";
-import { FALLBACK_GENRES, LANGUAGES } from "@/lib/constants";
+import { FALLBACK_GENRES, FALLBACK_TV_GENRES, LANGUAGES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,9 @@ export default function ProfilePage() {
 
   const genreNames = profile.preferences.genres
     .map((id) => FALLBACK_GENRES.find((g) => g.id === id)?.name)
+    .filter(Boolean) as string[];
+  const tvGenreNames = (profile.preferences.tvGenres ?? [])
+    .map((id) => FALLBACK_TV_GENRES.find((g) => g.id === id)?.name)
     .filter(Boolean) as string[];
   const langNames = profile.preferences.languages
     .map((c) => LANGUAGES.find((l) => l.code === c)?.label)
@@ -91,9 +94,15 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div>
-            <p className="mb-2 text-muted-foreground">Genres</p>
+            <p className="mb-2 text-muted-foreground">Movie genres</p>
             <div className="flex flex-wrap gap-2">
               {genreNames.length ? genreNames.map((g) => <Badge key={g} variant="secondary">{g}</Badge>) : <span className="text-muted-foreground">None set</span>}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-muted-foreground">Series genres</p>
+            <div className="flex flex-wrap gap-2">
+              {tvGenreNames.length ? tvGenreNames.map((g) => <Badge key={g} variant="secondary">{g}</Badge>) : <span className="text-muted-foreground">None set</span>}
             </div>
           </div>
           <div>

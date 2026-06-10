@@ -13,7 +13,9 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./client";
+import { mediaDocId } from "@/lib/utils";
 import type {
+  MediaType,
   UserProfile,
   UserPreferences,
   WatchlistItem,
@@ -22,6 +24,7 @@ import type {
 
 const EMPTY_PREFS: UserPreferences = {
   genres: [],
+  tvGenres: [],
   languages: [],
   industries: [],
   favoriteMovies: [],
@@ -86,9 +89,12 @@ export async function getWatchlist(uid: string): Promise<WatchlistItem[]> {
 
 export async function getWatchlistItem(
   uid: string,
-  movieId: number
+  movieId: number,
+  mediaType: MediaType = "movie"
 ): Promise<WatchlistItem | null> {
-  const snap = await getDoc(doc(db, "users", uid, "watchlist", String(movieId)));
+  const snap = await getDoc(
+    doc(db, "users", uid, "watchlist", mediaDocId(mediaType, movieId))
+  );
   return snap.exists() ? (snap.data() as WatchlistItem) : null;
 }
 
@@ -97,15 +103,21 @@ export async function addToWatchlist(
   item: Omit<WatchlistItem, "addedAt" | "notify">,
   notify = false
 ): Promise<void> {
-  await setDoc(doc(db, "users", uid, "watchlist", String(item.movieId)), {
+  const mediaType = item.mediaType ?? "movie";
+  await setDoc(doc(db, "users", uid, "watchlist", mediaDocId(mediaType, item.movieId)), {
     ...item,
+    mediaType,
     notify,
     addedAt: Date.now(),
   });
 }
 
-export async function removeFromWatchlist(uid: string, movieId: number): Promise<void> {
-  await deleteDoc(doc(db, "users", uid, "watchlist", String(movieId)));
+export async function removeFromWatchlist(
+  uid: string,
+  movieId: number,
+  mediaType: MediaType = "movie"
+): Promise<void> {
+  await deleteDoc(doc(db, "users", uid, "watchlist", mediaDocId(mediaType, movieId)));
 }
 
 // ----------------------------------------------------------- notification history

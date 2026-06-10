@@ -12,60 +12,61 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { isReleased } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { WatchlistItem } from "@/types";
+import type { MediaType, WatchlistItem } from "@/types";
 
 interface Props {
   movieId: number;
+  mediaType?: MediaType;
   title: string;
   posterPath: string | null;
   releaseDate: string | null;
-  /** Already available on OTT in some region — nothing left to notify about. */
+  /** Already available on OTT in some region. For movies this disables the
+   *  notify toggle (nothing left to alert on); for series it does NOT, because
+   *  new-season alerts remain useful while streaming. */
   streaming?: boolean;
 }
 
-export function MovieActions({ movieId, title, posterPath, releaseDate, streaming = false }: Props) {
+export function MovieActions({
+  movieId,
+  mediaType = "movie",
+  title,
+  posterPath,
+  releaseDate,
+  streaming = false,
+}: Props) {
   const { user } = useAuth();
   const [item, setItem] = useState<WatchlistItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<"watch" | "notify" | null>(null);
-  const released = isReleased(releaseDate);
+  const isTv = mediaType === "tv";
+  // Series are driven by the OTT checker, so treat them as "released" for the
+  // purposes of subscription messaging.
+  const released = isTv ? true : isReleased(releaseDate);
+  const base = { movieId, mediaType, title, posterPath, releaseDate, released };
 
   useEffect(() => {
     if (!user) return;
-    getWatchlistItem(user.uid, movieId)
+    getWatchlistItem(user.uid, movieId, mediaType)
       .then(setItem)
       .finally(() => setLoading(false));
-  }, [user, movieId]);
+  }, [user, movieId, mediaType]);
 
   const inWatchlist = !!item;
   const notifying = !!item?.notify;
+  const delQuery = `movieId=${movieId}&mediaType=${mediaType}`;
 
   async function toggleWatchlist() {
     if (!user) return;
     setBusy("watch");
     try {
       if (inWatchlist) {
-        await removeFromWatchlist(user.uid, movieId);
-        if (notifying) await apiFetch(`/api/waitlist?movieId=${movieId}`, { method: "DELETE" });
+        await removeFromWatchlist(user.uid, movieId, mediaType);
+        if (notifying) await apiFetch(`/api/waitlist?${delQuery}`, { method: "DELETE" });
         setItem(null);
         toast("Removed from watchlist");
       } else {
-        await addToWatchlist(user.uid, {
-          movieId,
-          title,
-          posterPath,
-          releaseDate,
-          released,
-        });
-        setItem({
-          movieId,
-          title,
-          posterPath,
-          releaseDate,
-          released,
-          notify: false,
-          addedAt: Date.now(),
-        });
+        await addToWatchlist(user.uid, base);
+        setItem({ ...base, notify: false, addedAt: Date.now() });
         toast.success("Added to watchlist");
       }
     } catch (e) {
@@ -81,45 +82,32 @@ export function MovieActions({ movieId, title, posterPath, releaseDate, streamin
     try {
       // Ensure it's on the watchlist first.
       if (!inWatchlist) {
-        await addToWatchlist(
-          user.uid,
-          { movieId, title, posterPath, releaseDate, released },
-          true
-        );
+        await addToWatchlist(user.uid, base, true);
       }
 
       if (notifying) {
-        await apiFetch(`/api/waitlist?movieId=${movieId}`, { method: "DELETE" });
-        await addToWatchlist(
-          user.uid,
-          { movieId, title, posterPath, releaseDate, released },
-          false
-        );
+        await apiFetch(`/api/waitlist?${delQuery}`, { method: "DELETE" });
+        await addToWatchlist(user.uid, base, false);
         setItem((p) => (p ? { ...p, notify: false } : p));
-        toast("Release alerts off");
+        toast(isTv ? "Series alerts off" : "Release alerts off");
       } else {
         const res = await apiFetch<{
           alreadyStreaming?: boolean;
           providers?: string[];
         }>("/api/waitlist", {
           method: "POST",
-          body: JSON.stringify({ movieId, title, posterPath, releaseDate }),
+          body: JSON.stringify({ movieId, mediaType, title, posterPath, releaseDate }),
         });
-        await addToWatchlist(
-          user.uid,
-          { movieId, title, posterPath, releaseDate, released },
-          true
-        );
-        setItem({
-          movieId,
-          title,
-          posterPath,
-          releaseDate,
-          released,
-          notify: true,
-          addedAt: item?.addedAt ?? Date.now(),
-        });
-        if (res?.alreadyStreaming) {
+        await addToWatchlist(user.uid, base, true);
+        setItem({ ...base, notify: true, addedAt: item?.addedAt ?? Date.now() });
+
+        if (isTv) {
+          toast.success(
+            res?.alreadyStreaming
+              ? "Streaming now — we'll ping you when new seasons drop 📺"
+              : "We'll ping you when it streams & when new seasons drop 📺"
+          );
+        } else if (res?.alreadyStreaming) {
           const on = res.providers?.length ? ` on ${res.providers[0]}` : "";
           toast.success(`Already streaming${on} — added to your watchlist 📺`);
         } else {
@@ -145,6 +133,18 @@ export function MovieActions({ movieId, title, posterPath, releaseDate, streamin
     );
   }
 
+  // For movies already on OTT there's no future event to alert on. Series keep
+  // the toggle so the user still gets new-season pings.
+  const showStreamingNow = streaming && !isTv;
+
+  const notifyLabel = notifying
+    ? "Alerts on"
+    : isTv
+      ? "Notify (streaming & new seasons)"
+      : released
+        ? "Notify (waitlist)"
+        : "Notify me when released";
+
   return (
     <div className="flex flex-wrap gap-3">
       <Button onClick={toggleWatchlist} disabled={busy !== null} variant={inWatchlist ? "secondary" : "default"}>
@@ -158,9 +158,7 @@ export function MovieActions({ movieId, title, posterPath, releaseDate, streamin
         {inWatchlist ? "In Watchlist" : "Add to Watchlist"}
       </Button>
 
-      {streaming ? (
-        // Already on OTT — there's no future release/streaming event to alert
-        // on, so don't offer a misleading "notify"/"alerts on" toggle.
+      {showStreamingNow ? (
         <Button disabled variant="secondary">
           <Tv /> Streaming now
         </Button>
@@ -173,7 +171,7 @@ export function MovieActions({ movieId, title, posterPath, releaseDate, streamin
           ) : (
             <Bell />
           )}
-          {notifying ? "Alerts on" : released ? "Notify (waitlist)" : "Notify me when released"}
+          {notifyLabel}
         </Button>
       )}
     </div>
