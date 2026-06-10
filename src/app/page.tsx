@@ -4,12 +4,13 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bell, Heart, Sparkles } from "lucide-react";
+import { Bell, Heart, Sparkles, MonitorPlay } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 
 const FEATURES = [
-  { icon: Bell, title: "Release alerts", desc: "Get a push the moment a waitlisted movie drops." },
+  { icon: Bell, title: "Theatrical release alerts", desc: "Get a push the moment a waitlisted movie hits theaters." },
+  { icon: MonitorPlay, title: "OTT streaming alerts", desc: "We ping you again when it lands on Netflix, Prime & other streaming services." },
   { icon: Sparkles, title: "Personalized", desc: "Recommendations tuned to your genres & languages." },
   { icon: Heart, title: "Your watchlist", desc: "Track everything you're waiting to watch in one place." },
 ];
@@ -44,7 +45,7 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl text-4xl font-extrabold tracking-tight md:text-6xl"
         >
-          Never miss a movie <span className="text-primary">release</span> again.
+          Never miss a movie — in <span className="text-primary">theaters</span> or on <span className="text-primary">streaming</span>.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -53,7 +54,8 @@ export default function Landing() {
           className="mt-6 max-w-xl text-lg text-muted-foreground"
         >
           Waitlist the movies you&apos;re excited about. MoviePing pings you the
-          instant they hit theaters — personalized to your taste.
+          instant they hit theaters — then again when they arrive on OTT.
+          Two alerts, zero FOMO, personalized to your taste.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -65,7 +67,7 @@ export default function Landing() {
           <Button size="lg" variant="outline" asChild><Link href="/login">I have an account</Link></Button>
         </motion.div>
 
-        <div className="mt-20 grid w-full max-w-4xl gap-6 md:grid-cols-3">
+        <div className="mt-20 grid w-full max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
