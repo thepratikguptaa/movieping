@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Waitlist upcoming movies and get pinged the moment they release. Powered by TMDB.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/favicon.ico" },
+  // Favicon is provided by the app/icon.svg file convention — auto-registered.
 };
 
 export const viewport: Viewport = {
