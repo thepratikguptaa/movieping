@@ -31,15 +31,45 @@ async function tmdb<T>(
   }
   if (!readToken && apiKey) url.searchParams.set("api_key", apiKey);
 
-  const res = await fetch(url.toString(), {
-    headers: readToken ? { Authorization: `Bearer ${readToken}` } : {},
-    next: { revalidate },
-  });
+  // Retry transient failures (flaky networks/VPNs drop connections with
+  // ECONNRESET; TMDB occasionally 5xxs). A genuine 4xx is returned immediately.
+  const MAX_ATTEMPTS = 3;
+  let lastErr: unknown;
 
-  if (!res.ok) {
-    throw new Error(`TMDB ${path} failed: ${res.status} ${res.statusText}`);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url.toString(), {
+        headers: readToken ? { Authorization: `Bearer ${readToken}` } : {},
+        next: { revalidate },
+      });
+
+      if (res.ok) return (await res.json()) as T;
+
+      // Client errors (404, 401, …) won't fix themselves — fail fast.
+      if (res.status >= 400 && res.status < 500) {
+        throw new TmdbError(`TMDB ${path} failed: ${res.status} ${res.statusText}`, res.status);
+      }
+      // 5xx → retry
+      lastErr = new Error(`TMDB ${path} failed: ${res.status} ${res.statusText}`);
+    } catch (err) {
+      if (err instanceof TmdbError) throw err; // don't retry real 4xx
+      lastErr = err; // network error (ECONNRESET / fetch failed) → retry
+    }
+
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((r) => setTimeout(r, 300 * attempt)); // backoff
+    }
   }
-  return res.json() as Promise<T>;
+
+  throw lastErr instanceof Error ? lastErr : new Error(`TMDB ${path} failed`);
+}
+
+/** TMDB error carrying the HTTP status so callers can detect a real 404. */
+export class TmdbError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = "TmdbError";
+  }
 }
 
 export async function getGenres(): Promise<TMDBGenre[]> {

@@ -1,11 +1,14 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Star, Clock, Calendar, CheckCircle2 } from "lucide-react";
-import { getMovieDetails } from "@/lib/tmdb";
+import { Star, Clock, Calendar, CheckCircle2, RotateCw } from "lucide-react";
+import { getMovieDetails, TmdbError } from "@/lib/tmdb";
 import { posterUrl, backdropUrl } from "@/lib/tmdb";
 import { formatDate, isReleased } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MovieActions } from "@/components/movie-actions";
+import type { TMDBMovieDetails } from "@/types";
 
 export const revalidate = 3600;
 
@@ -18,11 +21,33 @@ export default async function MoviePage({
   const movieId = Number(id);
   if (!Number.isFinite(movieId)) notFound();
 
-  let movie;
+  let movie: TMDBMovieDetails;
   try {
     movie = await getMovieDetails(movieId);
-  } catch {
-    notFound();
+  } catch (err) {
+    // A genuine 404 means the movie doesn't exist → show 404.
+    if (err instanceof TmdbError && err.status === 404) notFound();
+    // Otherwise it's a transient network/TMDB error (e.g. VPN dropped the
+    // connection) — show a retry instead of a misleading "not found".
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <h1 className="text-2xl font-bold">Couldn&apos;t load this movie</h1>
+        <p className="max-w-md text-muted-foreground">
+          We had trouble reaching the movie service. This is usually a flaky
+          network or VPN connection — please try again.
+        </p>
+        <div className="flex gap-3">
+          <Button asChild>
+            <Link href={`/movie/${movieId}`}>
+              <RotateCw className="h-4 w-4" /> Retry
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Back to dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const backdrop = backdropUrl(movie.backdrop_path);
@@ -32,10 +57,18 @@ export default async function MoviePage({
 
   return (
     <div className="-mt-6 md:-mt-8">
-      {/* Backdrop hero */}
-      <div className="relative -mx-4 h-[40vh] min-h-[260px] md:h-[55vh]">
+      {/* Backdrop hero — tall fixed height keeps it full-bleed; object-top
+          anchors faces and the extra height reduces how much gets cropped. */}
+      <div className="relative -mx-4 h-[60vh] min-h-[320px] md:h-[78vh]">
         {backdrop && (
-          <Image src={backdrop} alt="" fill priority className="object-cover" />
+          <Image
+            src={backdrop}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-top"
+          />
         )}
         <div className="hero-fade absolute inset-0" />
       </div>
@@ -98,7 +131,7 @@ export default async function MoviePage({
         {/* Overview */}
         <section className="mt-10 max-w-3xl">
           <h2 className="text-xl font-bold">Overview</h2>
-          <p className="mt-2 leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-justify leading-relaxed text-muted-foreground">
             {movie.overview || "No overview available."}
           </p>
         </section>

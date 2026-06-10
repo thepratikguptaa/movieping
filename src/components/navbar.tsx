@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, Clapperboard, LogOut, User as UserIcon, Bookmark } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,6 +17,7 @@ import {
 
 const NAV = [
   { href: "/dashboard", label: "Home" },
+  { href: "/search", label: "Search" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/notifications", label: "Notifications" },
 ];
@@ -50,8 +50,10 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-foreground",
-                  pathname === item.href ? "text-foreground" : "text-muted-foreground"
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  pathname === item.href
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                 )}
               >
                 {item.label}
@@ -61,9 +63,6 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild className="md:hidden">
-            <Link href="/notifications"><Bell className="h-5 w-5" /></Link>
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full outline-none ring-ring focus-visible:ring-2">

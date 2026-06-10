@@ -25,7 +25,7 @@ export function MovieCard({ movie }: { movie: MovieCardData }) {
       className="group relative"
     >
       <Link href={`/movie/${movie.id}`} className="block">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-secondary shadow-md">
+        <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-secondary shadow-md ring-1 ring-white/5 transition-shadow group-hover:shadow-2xl group-hover:shadow-black/50 group-hover:ring-primary/40">
           {img ? (
             <Image
               src={img}

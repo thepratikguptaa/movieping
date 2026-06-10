@@ -1,6 +1,10 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  getFirestore,
+  type Firestore,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,4 +20,22 @@ export const firebaseApp: FirebaseApp = getApps().length
   : initializeApp(firebaseConfig);
 
 export const auth: Auth = getAuth(firebaseApp);
-export const db: Firestore = getFirestore(firebaseApp);
+
+// Auto-detect long-polling so Firestore still connects behind VPNs, proxies,
+// strict tracking protection, and networks that block its streaming channel.
+// initializeFirestore can only run once per app; fall back to getFirestore on
+// hot-reload when it's already been initialized.
+function buildFirestore(): Firestore {
+  try {
+    return initializeFirestore(firebaseApp, {
+      // Force long-polling outright: the streaming WebChannel is what a VPN
+      // (WARP), proxy, or tracking protection blocks, producing the
+      // "client is offline" error. Long-polling uses ordinary HTTPS requests.
+      experimentalForceLongPolling: true,
+    });
+  } catch {
+    return getFirestore(firebaseApp);
+  }
+}
+
+export const db: Firestore = buildFirestore();

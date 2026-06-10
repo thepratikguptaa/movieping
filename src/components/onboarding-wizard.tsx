@@ -87,7 +87,7 @@ export function OnboardingWizard() {
     setSearching(true);
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/movies/search?query=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/movies/search?query=${encodeURIComponent(q)}&limit=8`);
         const data = await res.json();
         setResults(data.results ?? []);
       } finally {
