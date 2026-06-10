@@ -184,16 +184,18 @@ export function searchMovies(query: string, page = 1) {
 /** Discover movies tuned to a set of preferences (used for recommendations). */
 export function discoverMovies(opts: {
   genres?: number[];
-  languages?: string[];
+  language?: string; // single ISO 639-1 code, optional
   page?: number;
   sortBy?: string;
+  minVotes?: number;
 }) {
   return tmdb<TMDBPaginatedResponse<TMDBMovie>>("/discover/movie", {
-    with_genres: opts.genres?.join(",") || undefined,
-    with_original_language: opts.languages?.[0] || undefined,
+    // "|" = OR (match ANY selected genre). "," would mean ALL — far too narrow.
+    with_genres: opts.genres?.length ? opts.genres.join("|") : undefined,
+    with_original_language: opts.language || undefined,
     sort_by: opts.sortBy || "popularity.desc",
     page: opts.page ?? 1,
-    "vote_count.gte": 50,
+    "vote_count.gte": opts.minVotes ?? 30,
     include_adult: "false",
   });
 }

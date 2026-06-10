@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bell, Clapperboard, Heart, Sparkles } from "lucide-react";
+import { Bell, Heart, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 
@@ -27,7 +27,8 @@ export default function Landing() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-dark/30 via-background to-background" />
       <header className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clapperboard className="h-6 w-6 text-primary" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.svg" alt="MoviePing" className="h-7 w-7" />
           <span className="text-xl font-bold">Movie<span className="text-primary">Ping</span></span>
         </div>
         <div className="flex gap-2">

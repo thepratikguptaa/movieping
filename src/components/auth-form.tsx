@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Clapperboard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-dark/20 to-background p-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card/70 p-8 shadow-xl backdrop-blur">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-          <Clapperboard className="h-7 w-7 text-primary" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.svg" alt="MoviePing" className="h-8 w-8" />
           <span className="text-2xl font-bold">Movie<span className="text-primary">Ping</span></span>
         </Link>
 

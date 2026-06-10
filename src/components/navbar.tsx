@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Clapperboard, LogOut, User as UserIcon, Bookmark } from "lucide-react";
+import { Bell, LogOut, User as UserIcon, Bookmark } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,7 +39,8 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Clapperboard className="h-6 w-6 text-primary" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icon.svg" alt="MoviePing" className="h-7 w-7" />
             <span className="text-xl font-bold tracking-tight">
               Movie<span className="text-primary">Ping</span>
             </span>
