@@ -115,7 +115,9 @@ export function MovieActions({ movieId, title, posterPath, releaseDate }: Props)
           addedAt: item?.addedAt ?? Date.now(),
         });
         toast.success(
-          released ? "Added to waitlist" : "We'll ping you when it releases 🔔"
+          released
+            ? "We'll ping you when it starts streaming 📺"
+            : "We'll ping you when it releases & hits streaming 🔔"
         );
       }
     } catch (e) {

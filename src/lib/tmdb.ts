@@ -93,6 +93,86 @@ export function getMovieDetails(id: number) {
   return tmdb<TMDBMovieDetails>(`/movie/${id}`, { append_to_response: "credits" });
 }
 
+/** Default region for streaming availability (override with WATCH_REGION). */
+export const WATCH_REGION = process.env.WATCH_REGION || "US";
+
+interface TMDBProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+}
+interface TMDBProvidersResult {
+  link?: string;
+  flatrate?: TMDBProvider[]; // subscription streaming
+  free?: TMDBProvider[];
+  ads?: TMDBProvider[]; // free with ads
+  rent?: TMDBProvider[];
+  buy?: TMDBProvider[];
+}
+
+export interface OttAvailability {
+  onOtt: boolean; // available to stream (subscription / free / ads)
+  providers: { name: string; logoPath: string | null }[];
+  link: string | null;
+  region: string;
+}
+
+export interface RegionOtt {
+  region: string; // ISO 3166-1 country code
+  providers: { name: string; logoPath: string | null }[];
+  link: string | null;
+}
+
+function streamProviders(r: TMDBProvidersResult) {
+  const stream = [...(r.flatrate ?? []), ...(r.free ?? []), ...(r.ads ?? [])];
+  const seen = new Set<number>();
+  return stream
+    .filter((p) => (seen.has(p.provider_id) ? false : seen.add(p.provider_id)))
+    .map((p) => ({ name: p.provider_name, logoPath: p.logo_path }));
+}
+
+/**
+ * Streaming availability across ALL regions where the movie can be streamed.
+ * Returns one entry per country that has at least one streaming provider.
+ */
+export async function getAllOttRegions(id: number): Promise<RegionOtt[]> {
+  const data = await tmdb<{ results: Record<string, TMDBProvidersResult> }>(
+    `/movie/${id}/watch/providers`,
+    {},
+    60 * 60 * 6
+  );
+  const out: RegionOtt[] = [];
+  for (const [region, r] of Object.entries(data.results ?? {})) {
+    const providers = streamProviders(r);
+    if (providers.length) out.push({ region, providers, link: r.link ?? null });
+  }
+  return out;
+}
+
+/**
+ * Streaming availability for a movie in a region. "On OTT" means it can be
+ * streamed (subscription/free/ad-supported), not just rented or bought.
+ */
+export async function getWatchProviders(
+  id: number,
+  region: string = WATCH_REGION
+): Promise<OttAvailability> {
+  const data = await tmdb<{ results: Record<string, TMDBProvidersResult> }>(
+    `/movie/${id}/watch/providers`,
+    {},
+    60 * 60 * 6
+  );
+  const r = data.results?.[region];
+  const providers = r ? streamProviders(r) : [];
+
+  return {
+    onOtt: providers.length > 0,
+    providers,
+    link: r?.link ?? null,
+    region,
+  };
+}
+
 export function searchMovies(query: string, page = 1) {
   return tmdb<TMDBPaginatedResponse<TMDBMovie>>(
     "/search/movie",

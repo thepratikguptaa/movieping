@@ -1,57 +1,47 @@
 import { adminDb, adminMessaging } from "@/lib/firebase/admin";
-
-interface ReleaseNotifyArgs {
-  uid: string;
-  movieId: number;
-  title: string;
-  posterPath: string | null;
-}
+import type { NotificationType } from "@/types";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000";
 const POSTER_BASE = "https://image.tmdb.org/t/p/w500";
 
+interface PushArgs {
+  uid: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  movieId: number;
+  posterPath: string | null;
+}
+
 /**
- * Send a "movie released" push to every device token a user has, and record the
- * notification in their history. Prunes tokens that FCM reports as invalid.
+ * Send a push to every device a user has and record it in their notification
+ * history. Always logs history (even with no device token). Prunes dead tokens.
+ * Returns the number of devices successfully reached.
  */
-export async function notifyUserOfRelease({
+async function pushToUser({
   uid,
-  movieId,
+  type,
   title,
+  body,
+  movieId,
   posterPath,
-}: ReleaseNotifyArgs): Promise<number> {
-  const tokensSnap = await adminDb
-    .collection("users")
-    .doc(uid)
-    .collection("fcmTokens")
-    .get();
-
+}: PushArgs): Promise<number> {
   const url = `${APP_URL}/movie/${movieId}`;
-  const body = `${title} is out now. Tap to view details.`;
 
-  // Always record history, even if the user has no active device token.
   await adminDb
     .collection("users")
     .doc(uid)
     .collection("notifications")
-    .add({
-      type: "release",
-      title: "🎬 Now Showing",
-      body,
-      movieId,
-      posterPath: posterPath ?? null,
-      url,
-      read: false,
-      createdAt: Date.now(),
-    });
+    .add({ type, title, body, movieId, posterPath: posterPath ?? null, url, read: false, createdAt: Date.now() });
 
+  const tokensSnap = await adminDb.collection("users").doc(uid).collection("fcmTokens").get();
   if (tokensSnap.empty) return 0;
 
   const tokens = tokensSnap.docs.map((d) => ({ id: d.id, token: d.get("token") as string }));
 
   const resp = await adminMessaging.sendEachForMulticast({
     tokens: tokens.map((t) => t.token),
-    notification: { title: "🎬 Now Showing", body },
+    notification: { title, body },
     data: {
       movieId: String(movieId),
       url,
@@ -72,15 +62,46 @@ export async function notifyUserOfRelease({
         code === "messaging/registration-token-not-registered" ||
         code === "messaging/invalid-registration-token"
       ) {
-        await adminDb
-          .collection("users")
-          .doc(uid)
-          .collection("fcmTokens")
-          .doc(tokens[i].id)
-          .delete();
+        await adminDb.collection("users").doc(uid).collection("fcmTokens").doc(tokens[i].id).delete();
       }
     })
   );
 
   return resp.successCount;
+}
+
+/** "Now Showing" — a waitlisted movie has released. */
+export function notifyUserOfRelease(args: {
+  uid: string;
+  movieId: number;
+  title: string;
+  posterPath: string | null;
+}): Promise<number> {
+  return pushToUser({
+    ...args,
+    type: "release",
+    title: "🎬 Now Showing",
+    body: `${args.title} is out now. Tap to view details.`,
+  });
+}
+
+/** "Now Streaming" — a waitlisted movie has landed on an OTT platform. */
+export function notifyUserOfOtt(args: {
+  uid: string;
+  movieId: number;
+  title: string;
+  posterPath: string | null;
+  providers: string[];
+}): Promise<number> {
+  const where = args.providers.length
+    ? ` on ${args.providers.slice(0, 3).join(", ")}`
+    : "";
+  return pushToUser({
+    uid: args.uid,
+    movieId: args.movieId,
+    posterPath: args.posterPath,
+    type: "ott",
+    title: "📺 Now Streaming",
+    body: `${args.title} is now streaming${where}. Tap to watch.`,
+  });
 }

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/release-check",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/ott-check",
+      "schedule": "0 8 * * *"
     }
   ]
 }

@@ -40,13 +40,19 @@ export interface TrackedMovie {
   released: boolean;
   lastCheckedAt: number;
   subscriberCount: number;
+  // OTT / streaming availability
+  onOtt?: boolean;
+  ottProviders?: string[];
+  ottRegion?: string;
+  ottCheckedAt?: number;
 }
 
 // movies/{movieId}/subscribers/{uid}
 export interface MovieSubscriber {
   uid: string;
   subscribedAt: number;
-  notified: boolean;
+  notified: boolean; // theatrical/digital release notification sent
+  ottNotified?: boolean; // "now streaming" notification sent
 }
 
 // users/{uid}/fcmTokens/{tokenId}
@@ -56,7 +62,7 @@ export interface FcmTokenDoc {
   userAgent: string;
 }
 
-export type NotificationType = "release" | "system";
+export type NotificationType = "release" | "ott" | "system";
 
 // users/{uid}/notifications/{notifId}
 export interface NotificationDoc {

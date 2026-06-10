@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Star, Clock, Calendar, CheckCircle2, RotateCw } from "lucide-react";
-import { getMovieDetails, TmdbError } from "@/lib/tmdb";
+import { Star, Clock, Calendar, CheckCircle2, RotateCw, Tv } from "lucide-react";
+import { getMovieDetails, getAllOttRegions, WATCH_REGION, TmdbError } from "@/lib/tmdb";
 import { posterUrl, backdropUrl } from "@/lib/tmdb";
+import type { RegionOtt } from "@/lib/tmdb";
+import { WhereToWatch } from "@/components/where-to-watch";
 import { formatDate, isReleased } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,15 @@ export default async function MoviePage({
   const poster = posterUrl(movie.poster_path, "w500");
   const cast = movie.credits?.cast?.slice(0, 12) ?? [];
   const released = isReleased(movie.release_date);
+
+  // Streaming availability across all regions (best-effort).
+  let ottRegions: RegionOtt[] | null = null;
+  try {
+    ottRegions = await getAllOttRegions(movieId);
+  } catch {
+    ottRegions = null;
+  }
+  const streamingAnywhere = !!ottRegions && ottRegions.length > 0;
 
   return (
     <div className="-mt-6 md:-mt-8">
@@ -109,6 +120,11 @@ export default async function MoviePage({
               ) : (
                 <Badge>Upcoming</Badge>
               )}
+              {streamingAnywhere && (
+                <Badge variant="secondary" className="gap-1">
+                  <Tv className="h-3 w-3" /> Streaming
+                </Badge>
+              )}
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 md:justify-start">
@@ -135,6 +151,11 @@ export default async function MoviePage({
             {movie.overview || "No overview available."}
           </p>
         </section>
+
+        {/* Where to watch — availability across all regions, with a region picker */}
+        {ottRegions && (
+          <WhereToWatch regions={ottRegions} defaultRegion={WATCH_REGION} />
+        )}
 
         {/* Cast */}
         {cast.length > 0 && (
