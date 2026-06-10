@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Bell, Sparkles, MonitorPlay, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/footer";
 
 const FEATURES = [
   { icon: Bell, title: "Theatrical release alerts", desc: "Get a push the moment a waitlisted movie hits theaters." },
@@ -83,6 +84,8 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 }
