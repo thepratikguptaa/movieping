@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "subscribers",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "notified", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

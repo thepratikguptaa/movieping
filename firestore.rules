@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // User profile + preferences
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // Per-user watchlist items
+      match /watchlist/{movieId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // FCM tokens registered by this user
+      match /fcmTokens/{tokenId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Notification history (delivered notifications)
+      match /notifications/{notifId} {
+        allow read: if isOwner(uid);
+        // Marking read is allowed; creation/sending is server-only (Admin SDK).
+        allow update: if isOwner(uid);
+        allow create, delete: if false;
+      }
+    }
+
+    // Tracked movies + waitlist. Reads are public; writes are server-only.
+    match /movies/{movieId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+
+      // Subscribers waiting for this movie's release
+      match /subscribers/{uid} {
+        allow read: if isOwner(uid);
+        allow create, delete: if isOwner(uid);
+        allow update: if false;
+      }
+    }
+  }
+}

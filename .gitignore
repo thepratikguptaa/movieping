@@ -1,0 +1,17 @@
+/node_modules
+/.next/
+/out/
+/build
+.DS_Store
+*.pem
+.env
+.env*.local
+.vercel
+
+# Firebase service-account / admin credentials — NEVER commit
+*-adminsdk-*.json
+serviceAccount*.json
+firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
+*.tsbuildinfo
+next-env.d.ts
