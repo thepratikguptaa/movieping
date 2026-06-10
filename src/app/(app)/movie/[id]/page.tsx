@@ -65,6 +65,10 @@ export default async function MoviePage({
     ottRegions = null;
   }
   const streamingAnywhere = !!ottRegions && ottRegions.length > 0;
+  // Region-specific: only treat it as "streaming for you" if it's on OTT in the
+  // user's watch region — otherwise they should still be able to get an alert
+  // when it reaches their region.
+  const streamingInRegion = !!ottRegions?.some((r) => r.region === WATCH_REGION);
 
   return (
     <div className="-mt-6 md:-mt-8">
@@ -139,6 +143,7 @@ export default async function MoviePage({
                 title={movie.title}
                 posterPath={movie.poster_path}
                 releaseDate={movie.release_date || null}
+                streaming={streamingInRegion}
               />
             </div>
           </div>

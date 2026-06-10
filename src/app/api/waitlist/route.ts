@@ -64,7 +64,12 @@ export async function POST(req: Request) {
     }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    released,
+    alreadyStreaming: ott.onOtt,
+    providers: ott.providers.map((p) => p.name),
+  });
 }
 
 // Unsubscribe the user from a movie's release notifications.

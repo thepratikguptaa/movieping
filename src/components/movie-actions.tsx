@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { Bell, BellOff, Bookmark, BookmarkCheck, Loader2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -19,9 +19,11 @@ interface Props {
   title: string;
   posterPath: string | null;
   releaseDate: string | null;
+  /** Already available on OTT in some region — nothing left to notify about. */
+  streaming?: boolean;
 }
 
-export function MovieActions({ movieId, title, posterPath, releaseDate }: Props) {
+export function MovieActions({ movieId, title, posterPath, releaseDate, streaming = false }: Props) {
   const { user } = useAuth();
   const [item, setItem] = useState<WatchlistItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,10 @@ export function MovieActions({ movieId, title, posterPath, releaseDate }: Props)
         setItem((p) => (p ? { ...p, notify: false } : p));
         toast("Release alerts off");
       } else {
-        await apiFetch("/api/waitlist", {
+        const res = await apiFetch<{
+          alreadyStreaming?: boolean;
+          providers?: string[];
+        }>("/api/waitlist", {
           method: "POST",
           body: JSON.stringify({ movieId, title, posterPath, releaseDate }),
         });
@@ -114,11 +119,16 @@ export function MovieActions({ movieId, title, posterPath, releaseDate }: Props)
           notify: true,
           addedAt: item?.addedAt ?? Date.now(),
         });
-        toast.success(
-          released
-            ? "We'll ping you when it starts streaming 📺"
-            : "We'll ping you when it releases & hits streaming 🔔"
-        );
+        if (res?.alreadyStreaming) {
+          const on = res.providers?.length ? ` on ${res.providers[0]}` : "";
+          toast.success(`Already streaming${on} — added to your watchlist 📺`);
+        } else {
+          toast.success(
+            released
+              ? "We'll ping you when it starts streaming 📺"
+              : "We'll ping you when it releases & hits streaming 🔔"
+          );
+        }
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Action failed");
@@ -148,16 +158,24 @@ export function MovieActions({ movieId, title, posterPath, releaseDate }: Props)
         {inWatchlist ? "In Watchlist" : "Add to Watchlist"}
       </Button>
 
-      <Button onClick={toggleNotify} disabled={busy !== null} variant={notifying ? "secondary" : "outline"}>
-        {busy === "notify" ? (
-          <Loader2 className="animate-spin" />
-        ) : notifying ? (
-          <BellOff />
-        ) : (
-          <Bell />
-        )}
-        {notifying ? "Alerts on" : released ? "Notify (waitlist)" : "Notify me when released"}
-      </Button>
+      {streaming ? (
+        // Already on OTT — there's no future release/streaming event to alert
+        // on, so don't offer a misleading "notify"/"alerts on" toggle.
+        <Button disabled variant="secondary">
+          <Tv /> Streaming now
+        </Button>
+      ) : (
+        <Button onClick={toggleNotify} disabled={busy !== null} variant={notifying ? "secondary" : "outline"}>
+          {busy === "notify" ? (
+            <Loader2 className="animate-spin" />
+          ) : notifying ? (
+            <BellOff />
+          ) : (
+            <Bell />
+          )}
+          {notifying ? "Alerts on" : released ? "Notify (waitlist)" : "Notify me when released"}
+        </Button>
+      )}
     </div>
   );
 }
