@@ -10,6 +10,7 @@ import {
   getWatchlistItem,
 } from "@/lib/firebase/db";
 import { apiFetch } from "@/lib/api-client";
+import { ensurePushEnabled } from "@/lib/push";
 import { isReleased } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { MediaType, WatchlistItem } from "@/types";
@@ -80,6 +81,12 @@ export function MovieActions({
     if (!user) return;
     setBusy("notify");
     try {
+      // Turning alerts ON: make sure browser push is actually enabled first —
+      // otherwise the user subscribes but never receives a notification.
+      if (!notifying && typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission !== "granted") await ensurePushEnabled();
+      }
+
       // Ensure it's on the watchlist first.
       if (!inWatchlist) {
         await addToWatchlist(user.uid, base, true);

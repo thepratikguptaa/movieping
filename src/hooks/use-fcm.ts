@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { requestFcmToken, onForegroundMessage } from "@/lib/firebase/messaging";
-import { apiFetch } from "@/lib/api-client";
+import { onForegroundMessage } from "@/lib/firebase/messaging";
+import { ensurePushEnabled } from "@/lib/push";
 import { useAuth } from "@/lib/auth-context";
 
 type PermState = "default" | "granted" | "denied" | "unsupported";
@@ -45,22 +45,14 @@ export function useFcm() {
     if (!user) return false;
     setRegistering(true);
     try {
-      const token = await requestFcmToken();
+      const ok = await ensurePushEnabled();
       setPermission(Notification.permission as PermState);
-      if (!token) {
-        toast.error("Notifications not enabled", {
-          description: "Permission was denied or your browser doesn't support push.",
+      if (ok) {
+        toast.success("Notifications enabled", {
+          description: "We'll ping you when your waitlisted movies release. Keep the permission set to “Allow” so alerts don't stop.",
         });
-        return false;
       }
-      await apiFetch("/api/fcm/register", {
-        method: "POST",
-        body: JSON.stringify({ token, userAgent: navigator.userAgent }),
-      });
-      toast.success("Notifications enabled", {
-        description: "We'll ping you when your waitlisted movies release.",
-      });
-      return true;
+      return ok;
     } catch (e) {
       toast.error("Could not enable notifications", {
         description: e instanceof Error ? e.message : String(e),
