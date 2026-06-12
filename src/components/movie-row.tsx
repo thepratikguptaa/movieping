@@ -43,7 +43,9 @@ export function MovieRow({
 
           <div
             ref={scroller}
-            className="no-scrollbar flex gap-3 overflow-x-auto scroll-smooth px-1 pb-2 md:gap-4"
+            // py-4 gives the hover-scaled cards room to grow — overflow-x-auto
+            // also clips vertically, so without padding the top/bottom get cut.
+            className="no-scrollbar flex gap-3 overflow-x-auto scroll-smooth px-1 py-4 md:gap-4"
           >
             {movies.map((m) => (
               <div key={`${m.mediaType ?? "movie"}-${m.id}`} className="w-32 shrink-0 md:w-40 lg:w-44">

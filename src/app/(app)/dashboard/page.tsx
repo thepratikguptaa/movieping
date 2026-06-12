@@ -31,15 +31,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!profile) return;
-    const params = new URLSearchParams();
-    if (profile.preferences.genres.length)
-      params.set("genres", profile.preferences.genres.join(","));
-    if (profile.preferences.languages.length)
-      params.set("languages", profile.preferences.languages.join(","));
-    if (profile.preferences.tvGenres?.length)
-      params.set("tvGenres", profile.preferences.tvGenres.join(","));
-    fetchRow<MovieCardData>(`/api/movies/recommendations?${params.toString()}`).then(setRecs);
-    getWatchlist(profile.uid).then(setWatchlist).catch(() => setWatchlist([]));
+    getWatchlist(profile.uid)
+      .then(async (wl) => {
+        setWatchlist(wl);
+        // Drive content-based recommendations from the actual watchlist
+        // (most-recent first), falling back to stated preferences for cold start.
+        const seeds = [...wl]
+          .sort((a, b) => b.addedAt - a.addedAt)
+          .map((w) => ({ id: w.movieId, mediaType: w.mediaType ?? "movie", notify: w.notify }));
+        const res = await fetch("/api/recommendations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            watchlist: seeds,
+            preferences: {
+              genres: profile.preferences.genres,
+              tvGenres: profile.preferences.tvGenres ?? [],
+              language: profile.preferences.languages[0],
+            },
+          }),
+        });
+        const data = res.ok ? await res.json() : { results: [] };
+        setRecs(data.results ?? []);
+      })
+      .catch(() => {
+        setWatchlist([]);
+        setRecs([]);
+      });
   }, [profile]);
 
   const watchlistCards: MovieCardData[] = (watchlist ?? []).map((w) => ({

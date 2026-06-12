@@ -1,5 +1,6 @@
 import type {
   MediaType,
+  TMDBCastMember,
   TMDBGenre,
   TMDBMovie,
   TMDBMovieDetails,
@@ -7,6 +8,7 @@ import type {
   TMDBTvDetails,
   TMDBTvShow,
 } from "@/types";
+import type { TitleFeatures } from "@/lib/recommend";
 import { isReleased } from "@/lib/utils";
 
 const BASE_URL = "https://api.themoviedb.org/3";
@@ -168,6 +170,61 @@ export function normalizeMulti(
     });
   }
   return out;
+}
+
+// -------------------------------------------------- recommendation enrichment
+
+interface TMDBKeyword {
+  id: number;
+  name: string;
+}
+
+const CAST_LIMIT = 6; // top billed actors carry the most "taste" signal
+const KEYWORD_LIMIT = 10;
+
+/**
+ * Fetch a title's content features (genres, top cast, keywords, language,
+ * decade) for the content-based recommender. Cached aggressively (24h) since
+ * these rarely change and the same popular titles recur across users.
+ */
+export async function getTitleFeatures(
+  id: number,
+  mediaType: MediaType
+): Promise<TitleFeatures> {
+  const data = await tmdb<
+    (TMDBMovieDetails | TMDBTvDetails) & {
+      credits?: { cast: TMDBCastMember[] };
+      keywords?: { keywords?: TMDBKeyword[]; results?: TMDBKeyword[] };
+    }
+  >(`/${mediaType}/${id}`, { append_to_response: "credits,keywords" }, 60 * 60 * 24);
+
+  const title = (data as TMDBMovieDetails).title ?? (data as TMDBTvDetails).name ?? "Untitled";
+  const date = (data as TMDBMovieDetails).release_date ?? (data as TMDBTvDetails).first_air_date;
+  // TMDB returns movie keywords under `.keywords`, TV keywords under `.results`.
+  const kwList = data.keywords?.keywords ?? data.keywords?.results ?? [];
+  const year = date ? Number(date.slice(0, 4)) || undefined : undefined;
+
+  return {
+    id,
+    mediaType,
+    title,
+    posterPath: data.poster_path ?? null,
+    releaseDate: date,
+    voteAverage: data.vote_average,
+    genres: (data.genres ?? []).map((g) => ({ id: g.id, name: g.name })),
+    keywords: kwList.slice(0, KEYWORD_LIMIT).map((k) => ({ id: k.id, name: k.name })),
+    cast: (data.credits?.cast ?? []).slice(0, CAST_LIMIT).map((c) => ({ id: c.id, name: c.name })),
+    language: data.original_language,
+    year,
+  };
+}
+
+/** TMDB's own "more like this" list — the candidate source for the recommender. */
+export function getRecommendationsFor(id: number, mediaType: MediaType, page = 1) {
+  return tmdb<TMDBPaginatedResponse<TMDBMovie | TMDBTvShow>>(
+    `/${mediaType}/${id}/recommendations`,
+    { page }
+  );
 }
 
 /** Count of a series' seasons that have already aired (season_number >= 1). */

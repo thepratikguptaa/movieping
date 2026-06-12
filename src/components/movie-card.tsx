@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star, ImageOff, Tv } from "lucide-react";
+import { Star, ImageOff, Tv, Film } from "lucide-react";
 import { posterUrl } from "@/lib/tmdb";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { MediaType } from "@/types";
 
@@ -16,6 +16,8 @@ export interface MovieCardData {
   release_date?: string;
   vote_average?: number;
   mediaType?: MediaType;
+  /** Optional "why we recommended this" note shown on recommendation rows. */
+  reason?: string;
 }
 
 export function MovieCard({ movie }: { movie: MovieCardData }) {
@@ -29,12 +31,18 @@ export function MovieCard({ movie }: { movie: MovieCardData }) {
       className="group relative"
     >
       <Link href={href} className="block">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-secondary shadow-md ring-1 ring-white/5 transition-shadow group-hover:shadow-2xl group-hover:shadow-black/50 group-hover:ring-primary/40">
-          {isTv && (
-            <Badge className="absolute left-2 top-2 gap-1 bg-black/70 text-white">
-              <Tv className="h-3 w-3" /> Series
-            </Badge>
-          )}
+        <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-secondary shadow-md transition-shadow group-hover:shadow-2xl group-hover:shadow-black/50">
+          <span
+            className={cn(
+              "absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase shadow-lg ring-1",
+              isTv
+                ? "bg-primary text-white ring-black/20"
+                : "bg-white text-black ring-black/10"
+            )}
+          >
+            {isTv ? <Tv className="h-3 w-3" /> : <Film className="h-3 w-3" />}
+            {isTv ? "Series" : "Movie"}
+          </span>
           {img ? (
             <Image
               src={img}
@@ -49,7 +57,7 @@ export function MovieCard({ movie }: { movie: MovieCardData }) {
             </div>
           )}
           {typeof movie.vote_average === "number" && movie.vote_average > 0 && (
-            <Badge className="absolute right-2 top-2 gap-1 bg-black/70 text-white">
+            <Badge className="absolute bottom-2 right-2 z-10 gap-1 bg-black/75 text-white shadow-md">
               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
               {movie.vote_average.toFixed(1)}
             </Badge>
@@ -59,6 +67,12 @@ export function MovieCard({ movie }: { movie: MovieCardData }) {
             <p className="text-xs text-muted-foreground">{formatDate(movie.release_date)}</p>
           </div>
         </div>
+        {/* Always-visible reason caption — hover overlays don't work on touch. */}
+        {movie.reason && (
+          <p className="mt-1.5 line-clamp-2 px-0.5 text-[11px] leading-snug text-primary/90">
+            {movie.reason}
+          </p>
+        )}
       </Link>
     </motion.div>
   );
