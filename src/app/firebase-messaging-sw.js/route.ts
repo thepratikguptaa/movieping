@@ -20,18 +20,27 @@ importScripts("https://www.gstatic.com/firebasejs/11.2.0/firebase-messaging-comp
 
 firebase.initializeApp(${JSON.stringify(config)});
 
+// Activate a newly-deployed worker immediately instead of waiting for every tab
+// to close — otherwise users keep running the previous SW (and its old
+// notification logic) until they fully close the site.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
 const messaging = firebase.messaging();
 
-// Background messages (tab closed / not focused)
+// Background messages (tab closed / not focused). These are data-only messages
+// (see src/lib/notify.ts) so the SDK does not auto-display them — we render the
+// notification ourselves here, which avoids the duplicate-notification bug.
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || "MoviePing";
+  const data = payload.data || {};
+  const title = data.title || "MoviePing";
   const options = {
-    body: (payload.notification && payload.notification.body) || "",
+    body: data.body || "",
     icon: "/icons/icon-192.png",
     badge: "/icons/badge.png",
-    image: payload.data && payload.data.poster ? payload.data.poster : undefined,
-    data: { url: (payload.data && payload.data.url) || "/dashboard" },
-    tag: payload.data && payload.data.movieId ? "movie-" + payload.data.movieId : undefined,
+    image: data.poster ? data.poster : undefined,
+    data: { url: data.url || "/dashboard" },
+    tag: data.movieId ? "movie-" + data.movieId : undefined,
   };
   self.registration.showNotification(title, options);
 });

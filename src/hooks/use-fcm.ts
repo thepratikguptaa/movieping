@@ -30,11 +30,12 @@ export function useFcm() {
     if (!user) return;
     let unsub = () => {};
     onForegroundMessage((payload) => {
-      const n = payload.notification;
-      toast(n?.title ?? "MoviePing", {
-        description: n?.body,
-        action: payload.data?.url
-          ? { label: "View", onClick: () => (window.location.href = payload.data!.url) }
+      // Data-only messages (see src/lib/notify.ts) carry title/body in `data`.
+      const d = payload.data ?? {};
+      toast(d.title ?? "MoviePing", {
+        description: d.body,
+        action: d.url
+          ? { label: "View", onClick: () => (window.location.href = d.url!) }
           : undefined,
       });
     }).then((fn) => (unsub = fn));

@@ -41,17 +41,18 @@ async function pushToUser({
 
   const tokens = tokensSnap.docs.map((d) => ({ id: d.id, token: d.get("token") as string }));
 
+  // Data-only message: we deliberately omit the `notification` payload so the
+  // FCM SDK does NOT auto-display it. Our service worker's onBackgroundMessage
+  // handler renders the notification from `data`. Sending both causes the
+  // browser to show the alert twice.
   const resp = await adminMessaging.sendEachForMulticast({
     tokens: tokens.map((t) => t.token),
-    notification: { title, body },
     data: {
+      title,
+      body,
       movieId: String(movieId),
       url,
       poster: posterPath ? `${POSTER_BASE}${posterPath}` : "",
-    },
-    webpush: {
-      fcmOptions: { link: url },
-      notification: { icon: "/icons/icon-192.png" },
     },
   });
 
