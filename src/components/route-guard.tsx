@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Loader2 } from "lucide-react";
+import { BrandLoader } from "@/components/brand-loader";
 
 /**
  * Wrap authenticated pages. Redirects to /login if signed out, and to
@@ -35,7 +35,7 @@ export function RouteGuard({
   if (loading || !user || (!allowUnonboarded && profile && !profile.onboarded)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BrandLoader />
       </div>
     );
   }
