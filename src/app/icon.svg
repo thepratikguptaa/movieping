@@ -1,7 +1,7 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1a1a1a"/>
+      <stop stop-color="#1f1f1f"/>
       <stop offset="1" stop-color="#000000"/>
     </linearGradient>
   </defs>
@@ -9,19 +9,13 @@
   <!-- rounded dark tile -->
   <rect width="64" height="64" rx="15" fill="url(#bg)"/>
 
-  <!-- clapperboard, brand red -->
-  <g transform="translate(13 16)">
-    <!-- board body -->
-    <rect x="0" y="11" width="38" height="22" rx="3" fill="#E50914"/>
-    <!-- hinged top bar -->
-    <path d="M0 11 L2.6 1.5 A2 2 0 0 1 4.9 0.06 L37 4.2 A2 2 0 0 1 38.7 6.6 L37.4 13 Z" fill="#E50914"/>
-    <!-- diagonal clapper stripes -->
-    <path d="M9 1.6 L12.4 2 L7.2 11.2 L3.9 10.8 Z" fill="#0a0a0a"/>
-    <path d="M19 2.8 L22.4 3.2 L17.2 12.4 L13.9 12 Z" fill="#0a0a0a"/>
-    <path d="M29 4 L32.4 4.4 L29.6 9.6 L26.3 9.2 Z" fill="#0a0a0a"/>
+  <!-- "ping" waves emanating from the play tip, brand red, fading out -->
+  <g fill="none" stroke="#E50914" stroke-width="3.5" stroke-linecap="round">
+    <path d="M44.4 24.3 A10 10 0 0 1 44.4 39.7" opacity="0.9"/>
+    <path d="M47.6 20.5 A15 15 0 0 1 47.6 43.5" opacity="0.55"/>
+    <path d="M50.9 16.7 A20 20 0 0 1 50.9 47.3" opacity="0.3"/>
   </g>
 
-  <!-- "ping" notification dot -->
-  <circle cx="50" cy="15" r="7" fill="#000000"/>
-  <circle cx="50" cy="15" r="4.5" fill="#22c55e"/>
+  <!-- play triangle, brand red (rounded corners via round join) -->
+  <path d="M19 18 L19 46 L38 32 Z" fill="#E50914" stroke="#E50914" stroke-width="4" stroke-linejoin="round"/>
 </svg>
