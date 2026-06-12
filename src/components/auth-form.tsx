@@ -98,7 +98,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <div className="w-full max-w-md rounded-2xl border border-border bg-card/70 p-8 shadow-xl backdrop-blur">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="MoviePing" className="h-8 w-8" />
+          <img src="/icon.svg" alt="MoviePing" width={32} height={32} className="h-8 w-8" />
           <span className="text-2xl font-bold">Movie<span className="text-primary">Ping</span></span>
         </Link>
 

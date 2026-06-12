@@ -81,6 +81,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by title…"
+          aria-label="Search movies and series"
           className="h-12 pl-10 pr-10 text-base"
           autoFocus
         />

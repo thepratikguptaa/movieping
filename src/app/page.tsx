@@ -30,7 +30,7 @@ export default function Landing() {
       <header className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="MoviePing" className="h-7 w-7" />
+          <img src="/icon.svg" alt="MoviePing" width={28} height={28} className="h-7 w-7" />
           <span className="text-xl font-bold">Movie<span className="text-primary">Ping</span></span>
         </div>
         <div className="flex gap-2">
@@ -40,17 +40,20 @@ export default function Landing() {
       </header>
 
       <section className="container flex flex-col items-center pt-20 pb-16 text-center md:pt-32">
+        {/* No opacity fade on the hero text: it's the LCP element, so it must
+            paint from the server HTML rather than waiting on JS hydration. The
+            y-slide still animates without hiding the text. */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.5 }}
           className="max-w-3xl text-4xl font-extrabold tracking-tight md:text-6xl"
         >
           Never miss a movie or <span className="text-primary">web series</span> — in theaters or on <span className="text-primary">streaming</span>.
         </motion.h1>
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-6 max-w-xl text-lg text-muted-foreground"
         >

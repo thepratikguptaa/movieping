@@ -180,6 +180,7 @@ export function OnboardingWizard() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search movies…"
+                aria-label="Search movies"
                 className="pl-9"
               />
               {searching && (
