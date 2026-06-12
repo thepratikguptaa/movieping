@@ -1,6 +1,6 @@
 # MoviePing
 
-Waitlist movies **and web series** and get a push notification when they hit theatres, when they land on streaming, and when a tracked series gets a new season. Personalized recommendations, watchlists, and automated release/OTT checkers on a fully free stack.
+Waitlist movies **and web series** and get a push notification when they hit theatres, when they land on streaming, and when a tracked series gets a new season. Explainable, watchlist-driven recommendations, watchlists, and automated release/OTT checkers on a fully free stack.
 
 **Stack:** Next.js 15 (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Firebase Auth · Firestore · Firebase Cloud Messaging · TMDB API · Vercel
 
@@ -8,12 +8,16 @@ Waitlist movies **and web series** and get a push notification when they hit the
 
 - Email/password + Google auth, profile management
 - Onboarding wizard (movie genres, **series genres**, languages, industries, favorite movies)
-- Dashboard: personalized movie + series recommendations, upcoming, trending movies, trending series, watchlist
+- Dashboard: **content-based recommendations** that learn from your watchlist (TF-IDF feature vectors + cosine similarity, with a "Because you like…" reason on each pick), upcoming, trending movies, trending series, watchlist
 - Movie & series detail: poster, overview, cast, genres, release/air date, multi-region "where to watch"
 - Unified search across the full TMDB catalog (movies **and** series) with an "upcoming only" filter
 - Web push (FCM): permission prompt, token storage, foreground/background delivery, click handling, in-app history
 - Three notification events for waitlisted titles — **Now Showing** (theatrical/digital release, movies), **Now Streaming** (lands on an OTT, movies + series) and **New Season** (a tracked series adds a streaming season)
 - Netflix-inspired dark UI, mobile-first, responsive
+
+## Recommendations
+
+"Recommended for you" is a **content-based engine**, not a genre lookup. Each title is turned into a sparse feature vector (genres, top cast, keywords, language, decade); your watchlist becomes a weighted taste profile (alerts-on and recently-added titles count more); candidates from TMDB's similarity endpoint are scored by **cosine similarity** with **TF-IDF** weighting so distinctive traits beat ubiquitous ones. Each pick ships with an explanation ("Because you like time travel & space travel"). The scoring core ([`src/lib/recommend.ts`](./src/lib/recommend.ts)) is pure and side-effect-free; orchestration/IO lives in [`src/lib/recommend-server.ts`](./src/lib/recommend-server.ts). New users with an empty watchlist get a preference-based cold-start. Full walkthrough: [`docs/RECOMMENDATION_ENGINE.md`](./docs/RECOMMENDATION_ENGINE.md).
 
 ## Project layout
 
@@ -30,13 +34,16 @@ src/
 │     ├─ fcm/register/               # store FCM token
 │     ├─ waitlist/                   # subscribe / unsubscribe (movies + series, server-side)
 │     ├─ search/                     # unified movie + series multi-search
-│     ├─ movies/                     # trending · upcoming · search · genres · recommendations
+│     ├─ recommendations/            # content-based recommender (POST watchlist → ranked picks)
+│     ├─ movies/                     # trending · upcoming · search · genres · recommendations (cold-start)
 │     ├─ tv/                         # trending · genres
 │     └─ cron/                       # release-check · ott-check
 ├─ components/                       # UI + feature components
 ├─ hooks/use-fcm.ts
-├─ lib/                              # firebase/ · tmdb · notify · server-auth · auth-context · utils
+├─ lib/                              # firebase/ · tmdb · notify · recommend · recommend-server · server-auth · auth-context · utils
 └─ types/index.ts
+
+docs/                                # engineering deep-dives (recommendation engine, web push, cron idempotency)
 ```
 
 ## Firestore schema

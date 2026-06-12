@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: Bell, title: "Theatrical release alerts", desc: "Get a push the moment a waitlisted movie hits theaters." },
   { icon: MonitorPlay, title: "OTT streaming alerts", desc: "Pinged again when a movie or web series lands on Netflix, Prime & more." },
   { icon: Layers, title: "New-season alerts", desc: "Track a series and we'll tell you the instant a new season starts streaming." },
-  { icon: Sparkles, title: "Personalized", desc: "Movie & series picks tuned to your genres & languages." },
+  { icon: Sparkles, title: "Smart recommendations", desc: "Picks that learn from your watchlist — and tell you why, like “Because you like time travel & space”." },
 ];
 
 export default function Landing() {
