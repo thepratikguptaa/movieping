@@ -13,6 +13,25 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NotificationDoc } from "@/types";
 
+/**
+ * Resolve a notification's link to a path on the *current* origin. Older
+ * notifications stored an absolute URL (which froze the origin — e.g. localhost
+ * generated in dev), so strip any origin and fall back to the title's own page.
+ */
+function notificationPath(n: NotificationDoc): string {
+  if (n.url) {
+    if (n.url.startsWith("/")) return n.url;
+    try {
+      const u = new URL(n.url);
+      return u.pathname + u.search;
+    } catch {
+      /* fall through */
+    }
+  }
+  if (n.movieId) return `/${n.mediaType ?? "movie"}/${n.movieId}`;
+  return "/dashboard";
+}
+
 export default function NotificationsPage() {
   const { user } = useAuth();
   const { permission, registering, enableNotifications } = useFcm();
@@ -68,7 +87,7 @@ export default function NotificationsPage() {
             return (
               <li key={n.id}>
                 <Link
-                  href={n.url || "/dashboard"}
+                  href={notificationPath(n)}
                   onClick={() => onRead(n)}
                   className={cn(
                     "flex items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-accent",

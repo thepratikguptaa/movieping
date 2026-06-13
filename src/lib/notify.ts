@@ -1,7 +1,6 @@
 import { adminDb, adminMessaging } from "@/lib/firebase/admin";
 import type { MediaType, NotificationType } from "@/types";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000";
 const POSTER_BASE = "https://image.tmdb.org/t/p/w500";
 
 interface PushArgs {
@@ -28,7 +27,11 @@ async function pushToUser({
   mediaType = "movie",
   posterPath,
 }: PushArgs): Promise<number> {
-  const url = `${APP_URL}/${mediaType}/${movieId}`;
+  // Relative path on purpose: it resolves to whatever origin the app is served
+  // from (in-app links use the current origin; the service worker resolves it
+  // against its scope = the deployed domain for push clicks). Storing an
+  // absolute URL froze the origin at generation time (e.g. localhost in dev).
+  const url = `/${mediaType}/${movieId}`;
 
   await adminDb
     .collection("users")
