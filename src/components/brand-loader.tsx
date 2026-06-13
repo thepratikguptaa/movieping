@@ -23,7 +23,7 @@ export function BrandLoader({ size = 56 }: { size?: number }) {
       />
       {/* Beating app icon */}
       <motion.img
-        src="/icon.svg"
+        src="/logo.svg"
         alt=""
         width={size}
         height={size}

@@ -40,7 +40,7 @@ export function Navbar() {
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="MoviePing" width={28} height={28} className="h-7 w-7" />
+            <img src="/logo.svg" alt="MoviePing" width={28} height={28} className="h-7 w-7" />
             <span className="text-xl font-bold tracking-tight">
               Movie<span className="text-primary">Ping</span>
             </span>

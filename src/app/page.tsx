@@ -30,7 +30,7 @@ export default function Landing() {
       <header className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="MoviePing" width={28} height={28} className="h-7 w-7" />
+          <img src="/logo.svg" alt="MoviePing" width={28} height={28} className="h-7 w-7" />
           <span className="text-xl font-bold">Movie<span className="text-primary">Ping</span></span>
         </div>
         <div className="flex gap-2">
