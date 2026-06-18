@@ -108,7 +108,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/release-chec
 curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/ott-check
 ```
 
-Both crons run once daily (08:00 UTC) per [`vercel.json`](./vercel.json) — within Vercel Hobby's once-daily cron limit. Bump the schedule or trigger manually for faster checks on paid plans.
+Both crons run once daily at 02:30 UTC (08:00 IST — tuned so India-region users get morning alerts) per [`vercel.json`](./vercel.json) — within Vercel Hobby's once-daily cron limit. Bump the schedule or trigger manually for faster checks on paid plans.
 
 ## Deploy
 

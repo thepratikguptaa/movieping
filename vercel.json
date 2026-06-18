@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/release-check",
-      "schedule": "0 8 * * *"
+      "schedule": "30 2 * * *"
     },
     {
       "path": "/api/cron/ott-check",
-      "schedule": "0 8 * * *"
+      "schedule": "30 2 * * *"
     }
   ]
 }
